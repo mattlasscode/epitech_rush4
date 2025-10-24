@@ -6,55 +6,56 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.cluster import KMeans
 from scipy.spatial.distance import cdist
 
-# Set up visualization styles
+# Configurer le style des visualisations
 sns.set_style('whitegrid')
 plt.style.use('seaborn-v0_8-whitegrid')
 
-# Load the dataset
-# The dataset is delimited by semicolons, so we specify 'sep=';'
+# Charger le jeu de données
+# Le fichier utilise des points-virgules comme séparateur
 df = pd.read_csv('Camp_Market.csv', sep=';')
 
-# --- Data Cleaning and Preprocessing ---
+# --- Nettoyage et prétraitement des données ---
 
-# Drop irrelevant columns as specified in the prompt
+# Supprimer les colonnes non pertinentes
 df = df.drop(columns=['Z_CostContact', 'Z_Revenue'])
 
-# Fill missing values in 'Income' with the mean income
+# Remplir les valeurs manquantes de 'Income' par la moyenne
 df['Income'] = df['Income'].fillna(df['Income'].mean())
 
-# Convert 'Dt_Customer' to datetime objects
+# Convertir 'Dt_Customer' en type datetime
 df['Dt_Customer'] = pd.to_datetime(df['Dt_Customer'])
 
-# --- Feature Engineering ---
+# --- Création de nouvelles variables ---
 
-# Calculate customer's age from birth year
+# Estimer l'âge du client à partir de l'année de naissance
 df['Age'] = 2015 - df['Year_Birth']
 
-# Calculate the number of days since the customer's enrollment with the company
+# Nombre de jours depuis l'inscription (référence: 01/01/2015)
 df['Tenure_Days'] = (pd.to_datetime('2015-01-01') - df['Dt_Customer']).dt.days
 
-# Calculate total spending and total purchases
+# Somme des montants dépensés par catégorie
 spending_cols = [
     'MntWines', 'MntFruits', 'MntMeatProducts', 
     'MntFishProducts', 'MntSweetProducts', 'MntGoldProds'
 ]
 df['Total_Spending'] = df[spending_cols].sum(axis=1)
 
+# Total des achats selon les différents canaux
 purchase_cols = [
     'NumWebPurchases', 'NumCatalogPurchases', 
     'NumStorePurchases', 'NumDealsPurchases'
 ]
 df['Total_Purchases'] = df[purchase_cols].sum(axis=1)
 
-# Calculate total number of children at home
+# Nombre total d'enfants à la maison
 df['Dependents'] = df['Kidhome'] + df['Teenhome']
 
-# Remove rows with absurd age (e.g., Year_Birth before 1900)
+# Retirer les âges manifestement erronés (par ex. > 100 ans)
 df = df[df['Age'] < 100]
 
-# Create dummy variables for categorical features for clustering
+# Encoder les variables catégorielles pour le clustering
 df_encoded = pd.get_dummies(df, columns=['Education', 'Marital_Status'], drop_first=True)
 
-print("Data Preparation Complete.")
-print("Updated DataFrame Info:")
+print("Préparation des données terminée.")
+print("Informations sur le DataFrame mises à jour :")
 df_encoded.info()
